@@ -1,0 +1,16 @@
+# FastAPI + Uvicorn
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+
+# Telethon — Telegram MTProto клиент
+telethon==1.40.0
+
+# OpenAI SDK (поддерживает кастомный base_url)
+openai==1.79.0
+
+# Pydantic Settings (для загрузки .env)
+pydantic==2.11.3
+pydantic-settings==2.8.1
+
+# python-dotenv — загрузка .env файлов
+python-dotenv==1.1.0

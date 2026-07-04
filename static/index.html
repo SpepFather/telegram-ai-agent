@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram AI Agent</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- ===== ФОНОВЫЕ БЛЮРЫ ===== -->
+<div class="bg-blob blob-1"></div>
+<div class="bg-blob blob-2"></div>
+<div class="bg-blob blob-3"></div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-container" class="toast-container"></div>
+
+<div class="app-wrapper">
+
+    <!-- ===== HEADER ===== -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="brand">
+                <div class="logo-orb"><i class="bi bi-robot"></i></div>
+                <div>
+                    <h1 class="brand-title">Telegram <span class="gradient-text">AI Agent</span></h1>
+                    <p class="brand-sub">Панель управления ботом</p>
+                </div>
+            </div>
+            <div class="header-meta">
+                <div class="status-pill" id="wsPill">
+                    <span class="pill-dot ws"></span><span class="pill-text">Offline</span>
+                </div>
+                <div class="status-pill agent" id="agentPill">
+                    <span class="pill-dot agent"></span><span class="pill-text">Остановлен</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-narrow">
+
+        <!-- ===== HERO: Управление агентом ===== -->
+        <section class="hero glass-card">
+            <div class="hero-info">
+                <div class="hero-title-row">
+                    <span class="hero-label">Статус агента</span>
+                </div>
+                <div class="hero-meta">
+                    <div class="meta-chip"><i class="bi bi-cpu"></i><span id="modelInfo">—</span></div>
+                    <div class="meta-chip"><i class="bi bi-globe2"></i><span id="apiUrlInfo">—</span></div>
+                </div>
+            </div>
+            <div class="hero-actions">
+                <button class="btn-action btn-start" id="btnStart" onclick="startAgent()">
+                    <i class="bi bi-play-fill"></i><span>Запустить</span>
+                </button>
+                <button class="btn-action btn-stop" id="btnStop" onclick="stopAgent()" disabled>
+                    <i class="bi bi-stop-fill"></i><span>Остановить</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ===== TABS ===== -->
+        <nav class="tabs-nav">
+            <button class="tab-btn active" data-tab="telegram">
+                <i class="bi bi-telegram"></i><span>Telegram</span>
+            </button>
+            <button class="tab-btn" data-tab="ai">
+                <i class="bi bi-cpu"></i><span>AI API</span>
+            </button>
+            <button class="tab-btn" data-tab="bot">
+                <i class="bi bi-chat-dots"></i><span>Поведение</span>
+            </button>
+        </nav>
+
+        <!-- ===== PANELS ===== -->
+        <div class="panels">
+
+            <!-- Вкладка: Telegram -->
+            <section class="tab-panel active glass-card" id="tab-telegram">
+                <div class="panel-head">
+                    <div class="panel-icon telegram"><i class="bi bi-telegram"></i></div>
+                    <div>
+                        <h2>Telegram API</h2>
+                        <p>Ключи доступа к Telegram. Получить на my.telegram.org/apps</p>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="field">
+                        <label>API ID</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-hash input-icon"></i>
+                            <input type="number" id="fieldApiId" placeholder="12345678">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>API Hash</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-key input-icon"></i>
+                            <input type="password" id="fieldApiHash" placeholder="abcdef123456...">
+                            <button class="toggle-eye" onclick="togglePassword('fieldApiHash', this)"><i class="bi bi-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-save" onclick="saveEnv()"><i class="bi bi-check-lg"></i> Сохранить</button>
+            </section>
+
+            <!-- Вкладка: AI API -->
+            <section class="tab-panel glass-card" id="tab-ai">
+                <div class="panel-head">
+                    <div class="panel-icon ai"><i class="bi bi-cpu"></i></div>
+                    <div>
+                        <h2>AI API</h2>
+                        <p>OpenAI-совместимый API для генерации ответов</p>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="field full">
+                        <label>API Key</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-shield-lock input-icon"></i>
+                            <input type="password" id="fieldOpenaiKey" placeholder="sk-...">
+                            <button class="toggle-eye" onclick="togglePassword('fieldOpenaiKey', this)"><i class="bi bi-eye"></i></button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Base URL</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-globe input-icon"></i>
+                            <input type="text" id="fieldBaseUrl" placeholder="https://api.openmodel.ai/v1">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Модель</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-stars input-icon"></i>
+                            <input type="text" id="fieldModel" placeholder="deepseek-v4-flash">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Формат API</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-code-slash input-icon"></i>
+                            <select id="fieldApiFormat">
+                                <option value="openai">OpenAI (/v1/chat/completions)</option>
+                                <option value="anthropic">Anthropic (/v1/messages)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-save" onclick="saveEnv()"><i class="bi bi-check-lg"></i> Сохранить</button>
+                <div class="btn-row">
+                    <button class="btn-test" onclick="testApi()" id="btnTestApi">
+                        <i class="bi bi-wifi"></i> Проверить API
+                    </button>
+                    <span id="testApiResult" class="test-result"></span>
+                </div>
+            </section>
+
+            <!-- Вкладка: Поведение -->
+            <section class="tab-panel glass-card" id="tab-bot">
+                <div class="panel-head">
+                    <div class="panel-icon bot"><i class="bi bi-chat-dots"></i></div>
+                    <div>
+                        <h2>Поведение бота</h2>
+                        <p>Настройки общения, задержки и контекст диалога</p>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Разрешённые контакты <span class="hint">(пусто — всем)</span></label>
+                        <div class="input-wrap">
+                            <textarea id="fieldContacts" rows="4" placeholder="+79001234567&#10;@username"></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Системный промпт</label>
+                        <div class="input-wrap">
+                            <textarea id="fieldPrompt" rows="4" placeholder="Ты — дружелюбный собеседник..."></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Задержка мин. <span class="hint">секунд</span></label>
+                        <div class="input-wrap">
+                            <i class="bi bi-clock input-icon"></i>
+                            <input type="number" id="fieldMinDelay" step="0.5" min="0" max="10" placeholder="1.0">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Задержка макс. <span class="hint">секунд</span></label>
+                        <div class="input-wrap">
+                            <i class="bi bi-clock-history input-icon"></i>
+                            <input type="number" id="fieldMaxDelay" step="0.5" min="0" max="10" placeholder="3.0">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Память диалога</label>
+                        <div class="input-wrap" style="display:flex;gap:10px;align-items:center;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="fieldContextEnabled" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span style="font-size:13px;color:var(--text-dim);">включена</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Сообщений в памяти</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-chat-square-text input-icon"></i>
+                            <input type="number" id="fieldContextMessages" min="1" max="50" placeholder="6">
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-save" onclick="saveConfig()"><i class="bi bi-check-lg"></i> Сохранить</button>
+            </section>
+
+        </div>
+
+        <!-- ===== ЛОГИ ===== -->
+        <section class="logs glass-card">
+            <div class="logs-head">
+                <div class="logs-title"><i class="bi bi-terminal"></i> Логи</div>
+                <button class="btn-clear" onclick="clearLogs()"><i class="bi bi-trash3"></i> Очистить</button>
+            </div>
+            <div class="log-panel" id="logPanel">
+                <div class="log-entry type-info">
+                    <span class="log-time">—:—:—</span>
+                    <span class="log-badge">info</span>
+                    <span class="log-text">Ожидание подключения к серверу...</span>
+                </div>
+            </div>
+        </section>
+
+        <footer class="app-footer">Telegram AI Agent · FastAPI + Telethon + OpenAI</footer>
+
+    </div>
+</div>
+
+<!-- ===== MODAL: Авторизация Telegram ===== -->
+<div class="modal-overlay" id="authModal" style="display:none;">
+    <div class="modal-card glass-card">
+        <div class="modal-header">
+            <span class="modal-icon"><i class="bi bi-telegram"></i></span>
+            <div>
+                <h3>Авторизация Telegram</h3>
+                <p id="authDesc">Введите номер телефона для входа</p>
+            </div>
+        </div>
+        <div class="modal-body">
+            <!-- Шаг 1: Телефон -->
+            <div id="authStepPhone" class="auth-step">
+                <div class="input-wrap modal-input">
+                    <i class="bi bi-phone input-icon"></i>
+                    <input type="text" id="authPhoneInput" placeholder="+79001234567" autocomplete="tel">
+                </div>
+                <button class="btn-save" id="authPhoneBtn" onclick="submitAuthPhone()">
+                    <i class="bi bi-send"></i> Отправить код
+                </button>
+            </div>
+            <!-- Шаг 2: Код -->
+            <div id="authStepCode" class="auth-step" style="display:none;">
+                <div class="input-wrap modal-input">
+                    <i class="bi bi-key input-icon"></i>
+                    <input type="text" id="authCodeInput" placeholder="12345" maxlength="6" autocomplete="one-time-code">
+                </div>
+                <button class="btn-save" id="authCodeBtn" onclick="submitAuthCode()">
+                    <i class="bi bi-check-lg"></i> Подтвердить
+                </button>
+            </div>
+            <!-- Шаг 3: 2FA пароль (если нужен) -->
+            <div id="authStep2FA" class="auth-step" style="display:none;">
+                <div class="input-wrap modal-input">
+                    <i class="bi bi-shield-lock input-icon"></i>
+                    <input type="password" id="auth2FAInput" placeholder="Пароль двухфакторной аутентификации">
+                    <button class="toggle-eye" onclick="togglePassword('auth2FAInput', this)"><i class="bi bi-eye"></i></button>
+                </div>
+                <button class="btn-save" onclick="submitAuth2FA()">
+                    <i class="bi bi-check-lg"></i> Войти
+                </button>
+            </div>
+            <div id="authError" class="auth-error" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeAuthModal()">Отмена</button>
+            <span class="auth-timer" id="authTimer"></span>
+        </div>
+    </div>
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
